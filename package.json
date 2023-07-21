@@ -4,7 +4,7 @@
   "description": "",
   "main": "blog.js",
   "scripts": {
-    "start": "nodemon bloglist.js",
+    "start": "nodemon index.js",
     "test": "echo \"Error: no test specified\" && exit 1"
   },
   "author": "",
