@@ -4,9 +4,8 @@ const blogsRouter = require('express').Router()
 const Blog = require('../models/blog.schema')
 
 blogsRouter.get('/', (request, response) => {
-    Blog.find({}).then(blogs => {
-        response.json(blogs)
-    })
+    Blog.find({})
+        .then(blogs => response.json(blogs))
 })
 
 blogsRouter.get('/:id', (request, response, next) => {
@@ -23,6 +22,7 @@ blogsRouter.get('/:id', (request, response, next) => {
 
 blogsRouter.post('/', (request, response, next) => {
     const body = request.body
+
     const new_blog = new Blog({
         title: body.title,
         author: body.author,
@@ -31,9 +31,7 @@ blogsRouter.post('/', (request, response, next) => {
     })
 
     new_blog.save()
-        .then(savedBlog => {
-            response.json(savedBlog)
-        })
+        .then(savedBlog => response.json(savedBlog))
         .catch(error => next(error))
 })
 
