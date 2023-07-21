@@ -13,9 +13,10 @@ const blogSchema = new mongoose.Schema({
 const Blog = mongoose.model('Blog', blogSchema)
 
 const mongoUrl = 'mongodb+srv://hahnb:Corbyn@bloglist.3yvnt3r.mongodb.net/?retryWrites=true&w=majority'
-mongoose.connect(mongoUrl)
-        .then(() => console.log('successfully connected'))
-        .catch((error) => console.log('failed to connect', error))
+mongoose
+  .connect(mongoUrl)
+  .then(() => console.log('successfully connected'))
+  .catch((error) => console.log('failed to connect', error))
 
 app.use(cors())
 app.use(express.json())
