@@ -16,7 +16,7 @@ mongoose.connect(config.MONGODB_URI)
   .catch(() => logger.error('failed to connect'))
 
 app.use(cors())
-// add status build run here later
+//app.use(express.static('build'))
 app.use(express.json())
 app.use(middleware.requestLogger)
 

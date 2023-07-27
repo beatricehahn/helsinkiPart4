@@ -5,7 +5,8 @@ const Blog = require('../models/blog.schema')
 
 blogsRouter.get('/', (request, response) => {
     Blog.find({})
-        .then(blogs => response.json(blogs))
+    .then(blogs => response.json(blogs))
+    .then(() => console.log('At root route'))
 })
 
 blogsRouter.get('/:id', (request, response, next) => {
