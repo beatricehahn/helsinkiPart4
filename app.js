@@ -26,14 +26,4 @@ app.use('/api/blogs', blogsRouter)
 app.use(middleware.unknownEndpoint)
 app.use(middleware.errorHandler)
 
-// app.post('/api/blogs', (request, response) => {
-//   const blog = new Blog(request.body)
-
-//   blog
-//     .save()
-//     .then(result => {
-//       response.status(201).json(result)
-//     })
-// })
-
 module.exports = app

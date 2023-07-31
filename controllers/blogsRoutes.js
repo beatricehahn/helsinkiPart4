@@ -6,33 +6,16 @@ blogsRouter.get('/', async (request, response) => {
     response.json(blogs)
 })
 
-blogsRouter.get('/:id', async (request, response, next) => {
-    Blog.findById(request.params.id)
-        .then(blog => {
-            if (blog) {
-                response.json(blog)
-            } else {
-                response.status(400).end()
-            }
-        })
-        .catch(error => next(error))
-
-
-    // const blog = await Blog.findById(request.params.id)
-    // try {
-    //     if (blog) {
-    //         response.json(blog)
-    //     } else {
-    //         response.status(400).end()
-    //     }
-    // }
-
-    // catch (error) {
-    //     next(error)
-    // }
+blogsRouter.get('/:id', async (request, response) => {
+    const blog = await Blog.findById(request.params.id)
+    if (blog) {
+        response.json(blog)
+    } else {
+        response.status(400).end()
+    }
 })
 
-blogsRouter.post('/', (request, response, next) => {
+blogsRouter.post('/', async (request, response) => {
     const body = request.body
 
     // set likes value to 0 if not given
@@ -51,33 +34,28 @@ blogsRouter.post('/', (request, response, next) => {
         response.status(400).end()
     }
 
-    new_blog.save()
-        .then(savedBlog => response.status(201).json(savedBlog))
-        .catch(error => next(error))
+    const savedBlog = await new_blog.save()
+    response.status(201).json(savedBlog)
 })
 
-blogsRouter.delete('/:id', (request, response, next) => {
-    Blog.findByIdAndRemove(request.params.id)
-        .then(() => {
-            response.status(204).end()
-        })
-        .catch(error => next(error))
+blogsRouter.delete('/:id', async (request, response) => {
+    await Blog.findByIdAndRemove(request.params.id)
+    response.status(204).end()
 })
 
-blogsRouter.put('/:id', (request, response, next) => {
+// update
+blogsRouter.put('/:id', async (request, response) => {
     const body = request.body
+
     const blog_to_update = {
         title: body.title,
         author: body.author,
         url: body.url,
-        likes: body.url
+        likes: body.likes + 1
     }
 
-    Blog.findByIdAndUpdate(request.params.id, blog_to_update, { new: true })
-        .then(updatedBlog => {
-            response.json(updatedBlog)
-        })
-        .catch(error => next(error))
+    const updatedBlog = await Blog.findByIdAndUpdate(request.params.id, blog_to_update, { new: true })
+    response.json(updatedBlog)
 })
 
 module.exports = blogsRouter
