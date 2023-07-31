@@ -1,15 +1,12 @@
-// all routes related to blogs
-
 const blogsRouter = require('express').Router()
 const Blog = require('../models/blog.schema')
 
-blogsRouter.get('/', (request, response) => {
-    Blog.find({})
-    .then(blogs => response.json(blogs))
-    .then(() => console.log('At root route'))
+blogsRouter.get('/', async (request, response) => {
+    const blogs = await Blog.find({})
+    response.json(blogs)
 })
 
-blogsRouter.get('/:id', (request, response, next) => {
+blogsRouter.get('/:id', async (request, response, next) => {
     Blog.findById(request.params.id)
         .then(blog => {
             if (blog) {
@@ -19,10 +16,29 @@ blogsRouter.get('/:id', (request, response, next) => {
             }
         })
         .catch(error => next(error))
+
+
+    // const blog = await Blog.findById(request.params.id)
+    // try {
+    //     if (blog) {
+    //         response.json(blog)
+    //     } else {
+    //         response.status(400).end()
+    //     }
+    // }
+
+    // catch (error) {
+    //     next(error)
+    // }
 })
 
 blogsRouter.post('/', (request, response, next) => {
     const body = request.body
+
+    // set likes value to 0 if not given
+    if (!body.likes) {
+        body.likes = 0
+    }
 
     const new_blog = new Blog({
         title: body.title,
@@ -31,8 +47,12 @@ blogsRouter.post('/', (request, response, next) => {
         likes: body.likes
     })
 
+    if (!new_blog.title || !new_blog.url) {
+        response.status(400).end()
+    }
+
     new_blog.save()
-        .then(savedBlog => response.json(savedBlog))
+        .then(savedBlog => response.status(201).json(savedBlog))
         .catch(error => next(error))
 })
 

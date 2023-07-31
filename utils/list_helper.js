@@ -1,3 +1,26 @@
+const initialBlogs = [
+    {
+        title: "Canonical string reduction",
+        author: "Edsger W. Dijkstra",
+        likes: 12
+    },
+    {
+        title: "Giraffe",
+        author: "Kane Ellis",
+        likes: 1
+    },
+    {
+        title: "Cow sightings",
+        author: "Max Pallor",
+        likes: 10
+    },
+    {
+        title: "Bird eggs",
+        author: "Jane Goodwell",
+        likes: 9
+    }
+]
+
 // dummy test that returns 1 always
 const dummy = (blogs) => {
     return 1
@@ -26,8 +49,16 @@ const favoriteBlog = (blogs) => {
     return mostLikedBlog
 }
 
+// returns id prop from a single blog object
+const retrieveId = (blog) => {
+    const idProp = blog.id
+    return blog.id
+}
+
 module.exports = {
+    initialBlogs,
     dummy,
     totalLikes,
-    favoriteBlog
+    favoriteBlog,
+    retrieveId
 }
