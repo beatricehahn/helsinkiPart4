@@ -67,7 +67,7 @@ describe('adding a new blog', () => {
             url: "www.sample.com",
             title: "Moon phases",
             author: "Jack Maxx",
-            likes: 17,
+            likes: 17
         }
     
         await api

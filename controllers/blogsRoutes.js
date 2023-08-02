@@ -2,6 +2,7 @@ const blogsRouter = require('express').Router()
 const Blog = require('../models/blog.schema')
 const User = require('../models/user')
 const jwt = require('jsonwebtoken')
+const { userExtractor } = require('../utils/middleware')
 
 blogsRouter.get('/', async (request, response) => {
     const blogs = await Blog
@@ -29,6 +30,7 @@ const getTokenFrom = request => {
 
 blogsRouter.post('/', async (request, response) => {
     const body = request.body
+    const user = request.user
 
     // validity of token is checked with jwt.verify
     const decodedToken = jwt.verify(getTokenFrom(request), process.env.SECRET)
@@ -37,8 +39,6 @@ blogsRouter.post('/', async (request, response) => {
             error: 'invalid token' 
         })
     }
-
-    const user = await User.findById(decodedToken.id)
 
     // set likes value to 0 if not given
     if (!body.likes) {
@@ -65,8 +65,29 @@ blogsRouter.post('/', async (request, response) => {
 })
 
 blogsRouter.delete('/:id', async (request, response) => {
-    await Blog.findByIdAndRemove(request.params.id)
-    response.status(204).end()
+    const blog = await Blog.findById(request.params.id)
+    
+    // validity of token is checked with jwt.verify
+    const decodedToken = jwt.verify(getTokenFrom(request), process.env.SECRET)
+    if (!decodedToken.id) {
+        return response.status(401).json({ 
+            error: 'invalid token' 
+        })
+    }
+
+    const user = request.user
+    // no token cancels delete request immediately
+    if (!user) {
+        response.status(404).end()
+    }
+    
+    // then compare the user's id to the user id in the blog
+    if (user.id.toString() === blog.user.toString()) {
+        await Blog.findByIdAndRemove(request.params.id)
+        response.status(204).end()
+    } else {
+        response.status(401).end()
+    }
 })
 
 // update
