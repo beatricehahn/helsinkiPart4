@@ -1,0 +1,10 @@
+POST http://localhost:3003/api/blogs
+Content-Type: application/json
+
+{
+  "url": "https://anewworld.com",
+  "title": "A new world",
+  "author": "John Doe",
+  "likes": 18,
+  "userId": "64c82eff13175b3e3f5f123f"
+}
