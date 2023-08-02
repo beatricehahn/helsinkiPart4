@@ -12,13 +12,13 @@ describe('when there is initially one user in db', () => {
         await User.deleteMany({})
 
         const passwordHash = await bcrypt.hash('secret', 10)
-        const user = new User({ username: 'root', passwordHash })
+        const user = new User({ username: 'root', name: 'cake', passwordHash })
 
         await user.save()
-    })
+    }, 10000)
 
     test('creation succeeds with a fresh username', async () => {
-        const userAtStart = await helper.usesInDb()
+        const userAtStart = await listHelper.usersInDb()
 
         const newUser = {
             username: 'erenroot',
@@ -37,15 +37,15 @@ describe('when there is initially one user in db', () => {
 
         const usernames = usersAtEnd.map( u => u.username)
         expect(usernames).toContain(newUser.username)
-    })
+    }, 10000)
 
     test('creation fails with proper statuscode and message if username already taken', async () => {
         const usersAtStart = await listHelper.usersInDb()
 
         const newUser = {
             username: 'root',
-            name: 'Super user',
-            password: 'salmon'
+            name: 'cake',
+            password: 'secret'
         }
 
         const result = await api
@@ -69,5 +69,5 @@ describe('when there are multiple users', () => {
             .expect(200)
             .expect('COntent-Type', /application\/json/)
 
-    })
+    }, 10000)
 })

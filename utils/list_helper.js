@@ -1,3 +1,5 @@
+const User = require('../models/user')
+
 const initialBlogs = [
     {
         title: "Canonical string reduction",
