@@ -1,23 +1,28 @@
+const Blog = require('../models/blog.schema')
 const User = require('../models/user')
 
 const initialBlogs = [
     {
+        url: "https://www.yugioh-card.com/en/",
         title: "Canonical string reduction",
         author: "Edsger W. Dijkstra",
         likes: 12
     },
     {
-        title: "Giraffe",
+        url: 'https://www.giraffesetall.com/en/',
+        title: "Giraffes and Other Safari Mammals",
         author: "Kane Ellis",
         likes: 1
     },
     {
-        title: "Cow sightings",
+        url: 'http://www.raisingfarmanimals.com',
+        title: "Rasing Farm Animals",
         author: "Max Pallor",
         likes: 10
     },
     {
-        title: "Bird eggs",
+        url: 'http://www.choosingbirdeggs.com',
+        title: "Choosing Bird Eggs",
         author: "Jane Goodwell",
         likes: 9
     }
@@ -53,9 +58,14 @@ const favoriteBlog = (blogs) => {
 
 // returns id prop from a single blog object
 const retrieveId = (blog) => {
-    const idProp = blog.id
-    return blog.id
+    const id = blog.id
+    return id
 }
+
+const blogsInDb = async () => {
+    const blogs = await Blog.find({})
+    return blogs.map(blog => blog.toJSON())
+  }
 
 const usersInDb = async () => {
     const users = await User.find({})
@@ -68,5 +78,6 @@ module.exports = {
     totalLikes,
     favoriteBlog,
     retrieveId,
+    blogsInDb,
     usersInDb
 }

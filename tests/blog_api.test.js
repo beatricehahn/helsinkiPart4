@@ -64,10 +64,10 @@ describe('viewing a specific blog', () => {
 describe('adding a new blog', () => {
     test('a blog post can be added', async () => {
         const newBlog = {
+            url: "www.sample.com",
             title: "Moon phases",
             author: "Jack Maxx",
             likes: 17,
-            url: "www.sample.com"
         }
     
         await api
@@ -79,7 +79,7 @@ describe('adding a new blog', () => {
         const response = await api.get('/api/blogs')
         const checkTitle = response.body.map(blog => blog.title)
     
-        expect(response.body).toHaveLength(initialBlogs.length + 1)
+        expect(response.body).toHaveLength(listHelper.initialBlogs.length + 1)
         expect(checkTitle).toContain('Moon phases')
     })
     
@@ -97,9 +97,9 @@ describe('adding a new blog', () => {
     
     test('like value defaults to 0', async () => {
         const newBlog = {
+            url: "www.sample.com",
             title: "Sample title",
             author: "John Wick",
-            url: "www.sample.com"
         }
 
         await api
@@ -111,16 +111,15 @@ describe('adding a new blog', () => {
 
 describe('deleting a blog post', () => {
     test('succeeds with a status code 204 if id is valid', async () => {
-        const blogs_from_db = await api.get('/api/blogs')
+        const blogs_from_db = await listHelper.blogsInDb()
         const blog_to_delete = blogs_from_db[1]
 
         await api
             .delete(`/api/blogs/${blog_to_delete.id}`)
             .expect(204)
 
-        
         // check db after deletion
-        const updated_bloglist = await api.get('/api/blogs')
+        const updated_bloglist = await listHelper.blogsInDb()
 
         // expect current bloglist count to be 1 less than the initial count
         expect(updated_bloglist).toHaveLength(
