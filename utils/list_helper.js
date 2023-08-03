@@ -1,6 +1,8 @@
 const Blog = require('../models/blog.schema')
 const User = require('../models/user')
 
+const { groupBy } = require('lodash')
+
 const initialBlogs = [
     {
         url: "https://www.yugioh-card.com/en/",
@@ -33,27 +35,67 @@ const dummy = (blogs) => {
     return 1
 }
 
+const initialUsers = [
+    { username: 'tester', password: 'secret' }
+]
+
+const nonExistingId = async () => {
+    const blog = new Blog({ url: 'willremovethissoon', title: 'testing', author: 'testing' })
+    
+    await blog.save()
+    await blog.remove()
+
+    return blog._id.toString()
+}
+
 // returns the total sum of likes in all of the blog posts
-const totalLikes =  (listWithOneBlog) => {
-    const numOfLikes =  listWithOneBlog[0].likes
-    return numOfLikes
+const totalLikes =  (blog) => {
+    return blogs.reduce((sum, blog) => blog.likes + sum, 0)
 }
 
 // receives a list of blogs as a parameter, then finds out which blog has the most likes
 const favoriteBlog = (blogs) => {
-    if (!blogs || blogs.length === 0) {
-        return null
+    if (blogs.length === 0) {
+        return undefined
     }
 
-    let mostLikedBlog = blogs[0]
+    const { url, title, author, likes } = blogs.sort((b1, b2) => b2.likes - b1.likes)[0]
 
-    for (let i = 1; i < blogs.length; i++) {
-        if (blogs[i].likes > mostLikedBlog.likes) {
-            mostLikedBlog = blogs[i]
-        }
+    return { url, title, author, likes }
+}
+
+const mostBlogs = (blogs) => {
+    if (blogs.length === 0) {
+        return undefined
     }
 
-    return mostLikedBlog
+    const blogsByAuthor = groupBy(blogs, (blog) => blog.author)
+
+    const authorBlogs = Object.entries(blogsByAuthor.reduce((array, [author, blogList]) => {
+        return array.concat({
+            author,
+            blos: blogList.length
+        })
+    }), [])
+
+    return authorBlogs.sort((e1, e2) => e2.blogs - e1.blogs)[0]
+}
+
+const mostLikes = (blogs) => {
+    if (blogs.length === 0) {
+        return undefined
+    }
+
+    const blogsByAuthor = groupBy(blogs, (blog) => blog.author)
+
+    const authorBlogs = Object.entries(blogsByAuthor).reduce((array, [author, blogList]) => {
+        return array.concat({
+            author,
+            likes: blogList.reduce((sum, blog) => sum + blog.likes, 0)
+        })
+    }, [])
+
+    return authorBlogs.sort((e1, e2) => e2.likes - e1.likes)[0]
 }
 
 // returns id prop from a single blog object
@@ -74,9 +116,13 @@ const usersInDb = async () => {
 
 module.exports = {
     initialBlogs,
+    initialUsers,
+    nonExistingId,
     dummy,
     totalLikes,
     favoriteBlog,
+    mostBlogs,
+    mostLikes,
     retrieveId,
     blogsInDb,
     usersInDb
