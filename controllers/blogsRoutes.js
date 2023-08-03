@@ -1,12 +1,12 @@
 const blogsRouter = require('express').Router()
 const Blog = require('../models/blog.schema')
-const User = require('../models/user')
-const jwt = require('jsonwebtoken')
+
 const { userExtractor } = require('../utils/middleware')
 
 blogsRouter.get('/', async (request, response) => {
     const blogs = await Blog
-        .find({}).populate('user', { username: 1, name: 1 })
+        .find({})
+        .populate('user', { username: 1, name: 1 })
     response.json(blogs)
 })
 
@@ -19,18 +19,18 @@ blogsRouter.get('/:id', async (request, response) => {
     }
 })
 
-// helper function that isolates the token from the auth header
-const getTokenFrom = request => {
-    const auth = request.get('authorization')
-    if (auth && auth.startsWith('Bearer ')) {
-        return auth.replace('Bearer ', '')
-    }
-    return null
-}
+blogsRouter.post('/', userExtractor, async (request, response) => {
+    const { url, title, author, likes } = request.body
+    const new_blog = new Blog({
+        url, title, author,
+        likes: likes ? likes: 0
+    })
 
-blogsRouter.post('/', async (request, response) => {
-    const body = request.body
     const user = request.user
+
+    if (!user) {
+        return response.status(401).json({ error: 'operation not permited' })
+    }
 
     // validity of token is checked with jwt.verify
     const decodedToken = jwt.verify(getTokenFrom(request), process.env.SECRET)
@@ -40,32 +40,33 @@ blogsRouter.post('/', async (request, response) => {
         })
     }
 
-    // set likes value to 0 if not given
-    if (!body.likes) {
-        body.likes = 0
-    }
-
-    const new_blog = new Blog({
-        url: body.url,
-        title: body.title,
-        author: body.author,
-        likes: body.likes,
-        user: user.id
-    })
-
     if (!new_blog.title || !new_blog.url) {
-        response.status(400).end()
+        response.status(400).json({ error: 'missing title or url' })
     }
+
+    new_blog.user = user._id
 
     const savedBlog = await new_blog.save()
+    
     user.blogs = user.blogs.concat(savedBlog._id)
     await user.save()
-
+    
     response.status(201).json(savedBlog)
 })
 
+// update a blog
+blogsRouter.put('/:id', async (request, response) => {
+    const { url, title, author, likes } = request.body
+
+    const updatedBlog = await Blog.findByIdAndUpdate(request.params.id, { url, title, author, likes }, { new: true })
+    response.json(updatedBlog)
+})
+
+// delete a blog
 blogsRouter.delete('/:id', async (request, response) => {
     const blog = await Blog.findById(request.params.id)
+    
+        const user = request.user
     
     // validity of token is checked with jwt.verify
     const decodedToken = jwt.verify(getTokenFrom(request), process.env.SECRET)
@@ -74,35 +75,21 @@ blogsRouter.delete('/:id', async (request, response) => {
             error: 'invalid token' 
         })
     }
-
-    const user = request.user
-    // no token cancels delete request immediately
-    if (!user) {
-        response.status(404).end()
-    }
     
-    // then compare the user's id to the user id in the blog
-    if (user.id.toString() === blog.user.toString()) {
-        await Blog.findByIdAndRemove(request.params.id)
-        response.status(204).end()
-    } else {
-        response.status(401).end()
-    }
-})
-
-// update
-blogsRouter.put('/:id', async (request, response) => {
-    const body = request.body
-
-    const blog_to_update = {
-        url: body.url,
-        title: body.title,
-        author: body.author,
-        likes: body.likes + 1
+    if (!user || user.id.toString() === blog.user.toString()) {
+        return response.status(401).json({ error: 'operation not permited' })
     }
 
-    const updatedBlog = await Blog.findByIdAndUpdate(request.params.id, blog_to_update, { new: true })
-    response.json(updatedBlog)
+    user.blogs = user.blogs.filter(b => b.toString() !== blog.id.toString())
+
+    // remove blog reference from user
+    await user.save()
+
+    // remove blog
+    await blog.remove()
+
+    response.status(204).end()
 })
+
 
 module.exports = blogsRouter
