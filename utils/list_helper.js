@@ -36,7 +36,7 @@ const dummy = (blogs) => {
 }
 
 const initialUsers = [
-    { username: 'tester', password: 'secret' }
+    { username: 'fishsterling', password: 'cake' }
 ]
 
 const nonExistingId = async () => {

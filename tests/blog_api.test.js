@@ -19,11 +19,14 @@ describe('blogs api', () => {
         await Blog.deleteMany({})
 
         // create a test user and save the auth header
-        const user = listHelper.initialUsers[0]
-        (await api.post('/api/users')).send(user)
-        const response = (await api.post('/api/login')).setEncoding(user)
+        const user = listHelper.initialUsers
+
+        await api.post('/api/users').send(user)
+
+        const response = await api.post('/api/login').send(user)
+
         authHeader = `Bearer ${response.body.token}`
-    })
+    }, 10000)
 
     //GET
     describe('when there are blogs saved', () => {
@@ -53,13 +56,14 @@ describe('blogs api', () => {
         })
 
         test('a blog can be updated', async () => {
-            const [blogBefore] = await listHelper.blogsInDb()
+            const blogsBefore = await listHelper.blogsInDb()
+            const blogToUpdate = blogsBefore[0]
 
-            const updatedBlog = { ...blogBefore, title: 'This is an updated version' }
+            const updatedBlog = { ...blogToUpdate, title: 'This is an updated version' }
 
             await api
-                .put(`/api/blogs${blogBefore.id}`)
-                .send(modifiedBlog)
+                .put(`/api/blogs/${blogToUpdate.id}`)
+                .send(updatedBlog)
                 .expect(200)
 
             const blogs = await listHelper.blogsInDb()
@@ -86,7 +90,7 @@ describe('blogs api', () => {
                 .expect(201)
                 .expect('Content-Type', /application\/json/)
         
-            const blogs await listHelper.blogsInDb()
+            const blogs = await listHelper.blogsInDb()
             
             expect(blogs).toHaveLength(initialBlogs.length + 1)
 
@@ -160,7 +164,7 @@ describe('blogs api', () => {
                 .set('Authorization', authHeader)
                 .send(blog)
             
-                id = responbse.body.id
+                id = response.body.id
         })
         
         test('can be deleted by the creator', async () => {
@@ -190,7 +194,7 @@ describe('blogs api', () => {
     })
 
     describe('creation of a user', () => {
-        test('succeeds with a valid username and password', () => {
+        test('succeeds with a valid username and password', async () => {
             const user = {
                 username: 'testingJenny',
                 pasword: 'cakeeater'
@@ -222,7 +226,7 @@ describe('blogs api', () => {
                 .expect('Content-Type', /application\/json/)
 
             expect(response.body.error).toContain(
-                '`username` (`co`) is shorter than the minimum length allowed (3)'
+                '`username` (`co`) is shorter than the minimum allowed length (3)'
             )
         })
 
@@ -239,12 +243,12 @@ describe('blogs api', () => {
                 .expect('Content-Type', /application\/json/)
 
             expect(response.body.error).toContain(
-                '`password` is shorter than the minimum length allowed (3)'
+                '`password` is shorter than the minimum allowed length (3)'
             )
         })
 
         test('fails with a proper error if username is not unique', async () => {
-            const user = listHelper.initialUsers[0]
+            const user = listHelper.initialUsers
 
             const response = await api
                 .post('/api/users')
