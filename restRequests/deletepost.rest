@@ -1,11 +1,4 @@
-POST http://localhost:3003/api/blogs
-Content-Type: application/json
+DELETE http://localhost:3003/api/blogs/64d70e653270f2c0342bce98
+id: 64d70295b154cb1ec2897789
 Authorization: Bearer eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJ1c2VybmFtZSI6ImZpc2hzdGVybGluZyIsImlkIjoiNjRjYTlmNGM2ODViZTIxYmY2N2NmNGE3IiwiaWF0IjoxNjkxODA4MTE5fQ.NoXqAtZxGZpHu1Og1gheuyny4S68Xdu5rD0zZu3W_d4
 
-{
-  "url": "https://yugioh.com",
-  "title": "Yu-gi-oh",
-  "author": "Takahashi",
-  "likes": 20,
-  "userId": "64c82eff13175b3e3f5f123f"
-}

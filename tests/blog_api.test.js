@@ -11,7 +11,7 @@ mongoose.set("bufferTimeoutMS", 30000)
 
 const listHelper = require('../utils/list_helper')
 
-let authHeader
+let authHeader 
 
 describe('blogs api', () => {
     // initialize database before every test
@@ -19,13 +19,15 @@ describe('blogs api', () => {
         await Blog.deleteMany({})
 
         // create a test user and save the auth header
-        const user = listHelper.initialUsers
+        const user = listHelper.initialUsers[0]
 
         await api.post('/api/users').send(user)
 
+        // a token is supposed to be attached to the response
         const response = await api.post('/api/login').send(user)
 
         authHeader = `Bearer ${response.body.token}`
+        //console.log('authHeader at beforeEach is', authHeader);
     }, 10000)
 
     //GET
@@ -72,79 +74,80 @@ describe('blogs api', () => {
 
             expect(titles).toContain(updatedBlog.title)
         })
-    })
 
-    describe('a new blog', () => {
-        test('can be added', async () => {
-            const newBlog = {
-                url: "http://www.moonphases.com",
-                title: "Moon phases",
-                author: "Jack Maxx",
-                likes: 17
-            }
-        
-            await api
-                .post('/api/blogs')
-                .set('Authorization', authHeader)
-                .send(newBlog)
-                .expect(201)
-                .expect('Content-Type', /application\/json/)
-        
-            const blogs = await listHelper.blogsInDb()
+        describe('a new blog', () => {
+            test('can be added', async () => {
+                const newBlog = {
+                    url: "http://www.moonphases.com",
+                    title: "Moon phases",
+                    author: "Jack Maxx",
+                    likes: 17
+                }
+                console.log('authHeader is ', authHeader);
             
-            expect(blogs).toHaveLength(initialBlogs.length + 1)
-
-            const titles = blog.map(r => r.title)
-
-            expect(titles).toContain(blog.title)
-        })
-
-        test('has like value default to 0 if initial value is not given', async () => {
-            const newBlog = {
-                url: "http://www.sample.com",
-                title: "Three top boats for fishing",
-                author: "John Wick"
-            }
+                await api
+                    .post('/api/blogs')
+                    .set('Authorization', authHeader)
+                    .send(newBlog)
+                    .expect(201)
+                    .expect('Content-Type', /application\/json/)
+            
+                const blogs = await listHelper.blogsInDb()
+                
+                expect(blogs).toHaveLength(listHelper.initialBlogs.length + 1)
     
-            const response = await api
-                .post('/api/blogs')
-                .set('Authorization', authHeader)
-                .send(newBlog)
-                .expect(201)
-                .expect('Content-Type', /application\/json/)
-
-            expect(response.body.likes).toBe(0)
-        })
-
-        test('if title is missing, creation fails', async () => {
-            const blog = {
-                author: "Edgar Allan Poe",
-                url: "http://www.sample.com"
-            }
-
-            const response = await api
-                .post('/api/blogs')
-                .set('Authorization', authHeader)
-                .send(blog)
-                .expect(400)
-                .expect('Content-Type', /application\/json/)
-        })
-
-        test('url is missing', async () => {
-            const blogWithoutUrl = {
-                title: "Club Penguin",
-                author: "Edsger W. Dijkstra",
-                likes: 12
-            }
+                const titles = blogs.map(r => r.title)
+    
+                expect(titles).toContain(newBlog.title)
+            })
+    
+            test('has like value default to 0 if initial value is not given', async () => {
+                const newBlog = {
+                    url: "http://www.sample.com",
+                    title: "Three top boats for fishing",
+                    author: "John Wick"
+                }
         
-            const response = await api
-                .post('/api/blogs')
-                .set('Authorization', authHeader)
-                .send(blogWithoutUrl)
-                .expect(400)
-                .expect('Content-Type', /application\/json/)
+                const response = await api
+                    .post('/api/blogs')
+                    .set('Authorization', authHeader)
+                    .send(newBlog)
+                    .expect(201)
+                    .expect('Content-Type', /application\/json/)
+    
+                expect(response.body.likes).toBe(0)
+            })
+    
+            test('if title is missing, creation fails', async () => {
+                const blog = {
+                    author: "Edgar Allan Poe",
+                    url: "http://www.sample.com"
+                }
+    
+                const response = await api
+                    .post('/api/blogs')
+                    .set('Authorization', authHeader)
+                    .send(blog)
+                    .expect(400)
+                    .expect('Content-Type', /application\/json/)
+            })
+    
+            test('url is missing', async () => {
+                const blogWithoutUrl = {
+                    title: "Club Penguin",
+                    author: "Edsger W. Dijkstra",
+                    likes: 12
+                }
+            
+                const response = await api
+                    .post('/api/blogs')
+                    .set('Authorization', authHeader)
+                    .send(blogWithoutUrl)
+                    .expect(400)
+                    .expect('Content-Type', /application\/json/)
+            })
+    
         })
-
     })
 
     describe('a preexisting blog', () => {
@@ -164,11 +167,24 @@ describe('blogs api', () => {
                 .set('Authorization', authHeader)
                 .send(blog)
             
-                id = response.body.id
+            id = response.body.id
         })
-        
+            
+        test('can not be deleted without valid auth header', async () => {
+            const blogsBefore = await listHelper.blogsInDb()
+
+            await api
+                .delete(`/api/blogs${id}`)
+                .expect(401)
+            
+                const blogsAfter = await listHelper.blogsInDb()
+
+                expect(blogsAfter).toHaveLength(1)
+        })
+
         test('can be deleted by the creator', async () => {
             const blogsBefore = await listHelper.blogsInDb()
+            expect(blogsBefore).toHaveLength(1)
 
             await api
                 .delete(`/api/blogs/${id}`)
@@ -180,17 +196,6 @@ describe('blogs api', () => {
             expect(blogsAfter).toHaveLength(0)
         })
 
-        test('can not be deleted without valid auth  header', async () => {
-            const blogsBefore = await blogsInDb()
-
-            await api
-                .delete(`/api/blogs${id}`)
-                .expect(401)
-            
-                const blogsAfter = await listHelper.blogsInDb()
-
-                expect(blogsAfter).toHaveLength(1)
-        })
     })
 
     describe('creation of a user', () => {

@@ -1,5 +1,16 @@
 const blogsRouter = require('express').Router()
 const Blog = require('../models/blog.schema')
+const User = require('../models/user')
+
+const jwt = require('jsonwebtoken')
+
+const getTokenFrom = request => {
+    const authorization = request.get('authorization')
+    if (authorization && authorization.startsWith('Bearer ')) {
+      return authorization.replace('Bearer ', '')
+    }
+    return null
+}
 
 const { userExtractor } = require('../utils/middleware')
 
@@ -20,31 +31,25 @@ blogsRouter.get('/:id', async (request, response) => {
 })
 
 blogsRouter.post('/', userExtractor, async (request, response) => {
-    const { url, title, author, likes } = request.body
+    const body = request.body
     const new_blog = new Blog({
-        url, title, author,
-        likes: likes ? likes: 0
+        url: body.url,
+        title: body.title,
+        author: body.author,
+        likes: body.likes ? body.likes : 0
     })
 
     const user = request.user
-
+    
     if (!user) {
-        return response.status(401).json({ error: 'operation not permited' })
+        return response.status(401).json({ error: 'operation not permitted' })
     }
 
-    // validity of token is checked with jwt.verify
-    const decodedToken = jwt.verify(getTokenFrom(request), process.env.SECRET)
-    if (!decodedToken.id) {
-        return response.status(401).json({ 
-            error: 'invalid token' 
-        })
-    }
+    new_blog.user = user._id
 
     if (!new_blog.title || !new_blog.url) {
         response.status(400).json({ error: 'missing title or url' })
     }
-
-    new_blog.user = user._id
 
     const savedBlog = await new_blog.save()
     
@@ -63,21 +68,14 @@ blogsRouter.put('/:id', async (request, response) => {
 })
 
 // delete a blog
-blogsRouter.delete('/:id', async (request, response) => {
+blogsRouter.delete('/:id', userExtractor, async (request, response) => {
     const blog = await Blog.findById(request.params.id)
+    console.log(blog);
     
-        const user = request.user
+    const user = request.user
     
-    // validity of token is checked with jwt.verify
-    const decodedToken = jwt.verify(getTokenFrom(request), process.env.SECRET)
-    if (!decodedToken.id) {
-        return response.status(401).json({ 
-            error: 'invalid token' 
-        })
-    }
-    
-    if (!user || user.id.toString() === blog.user.toString()) {
-        return response.status(401).json({ error: 'operation not permited' })
+    if (!user || blog.user.toString() !== user.id.toString()) {
+        return response.status(401).json({ error: 'operation not permitted' })
     }
 
     user.blogs = user.blogs.filter(b => b.toString() !== blog.id.toString())
@@ -86,7 +84,8 @@ blogsRouter.delete('/:id', async (request, response) => {
     await user.save()
 
     // remove blog
-    await blog.remove()
+    const idToRemove = blog.id.toString()
+    await Blog.deleteOne({ _id: idToRemove })
 
     response.status(204).end()
 })
