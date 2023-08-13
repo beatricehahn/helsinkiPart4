@@ -200,21 +200,23 @@ describe('blogs api', () => {
 
     describe('creation of a user', () => {
         test('succeeds with a valid username and password', async () => {
+            const usersBefore = listHelper.usersInDb()
+            
             const user = {
                 username: 'jenny',
                 name: 'jenny jenny',
                 password: 'cake'
             }
 
-            const response = await api
+            await api
                 .post('/api/users')
                 .send(user)
                 .expect(201)
                 .expect('Content-Type', /application\/json/)
 
-            const users = listHelper.usersInDb()
+            const usersNow = listHelper.usersInDb()
 
-            expect(users).toHaveLength(listHelper.initialUsers.length + 1)
+            expect(usersNow).toHaveLength(usersBefore.length + 1)
             const usernames = users.map(u => u.username)
             expect(usernames).toContain(user.username)
         })
