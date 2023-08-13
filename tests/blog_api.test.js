@@ -201,8 +201,9 @@ describe('blogs api', () => {
     describe('creation of a user', () => {
         test('succeeds with a valid username and password', async () => {
             const user = {
-                username: 'testingJenny',
-                pasword: 'cakeeater'
+                username: 'jenny',
+                name: 'jenny jenny',
+                password: 'cake'
             }
 
             const response = await api
@@ -253,7 +254,7 @@ describe('blogs api', () => {
         })
 
         test('fails with a proper error if username is not unique', async () => {
-            const user = listHelper.initialUsers
+            const user = listHelper.initialUsers[0]
 
             const response = await api
                 .post('/api/users')
